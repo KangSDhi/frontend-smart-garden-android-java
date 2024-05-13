@@ -1,6 +1,9 @@
 package com.example.mygarden;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -14,11 +17,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.mygarden.config.HttpHandler;
 import com.example.mygarden.dto.GardenResponse;
+import com.example.mygarden.service.NotificationService;
 
 public class MainActivity extends AppCompatActivity implements HttpHandler.HttpHandlerListener {
 
     private TextView mTextView;
-    private HttpHandler mHttpHandler;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -37,12 +40,27 @@ public class MainActivity extends AppCompatActivity implements HttpHandler.HttpH
 
         mTextView = (TextView) findViewById(R.id.persenKelembapanTanah);
 
-        String url = "http://103.117.57.94:3000/api/garden/last";
+        HttpHandler mHttpHandler = new HttpHandler(this);
 
-        mHttpHandler = new HttpHandler(this);
+        String URL_LAST_DATA_GARDEN = "http://103.117.57.94:3000/api/garden/last";
+        mHttpHandler.startFetchingData(URL_LAST_DATA_GARDEN, INTERVAL);
 
-        mHttpHandler.startFetchingData(url, INTERVAL);
+        if (!foregroundServiceRunning()){
+            Intent serviceIntent = new Intent(this, NotificationService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            }
+        }
+    }
 
+    public boolean foregroundServiceRunning(){
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service: activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (NotificationService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
