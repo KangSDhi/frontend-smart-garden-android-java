@@ -2,4 +2,5 @@
     <string name="app_name">My Garden</string>
     <string name="kelembapan_tanah">Kelembapan Tanah</string>
     <string name="persen_kelembapan_tanah">0 %</string>
+    <string name="tentang_aplikasi">Tentang</string>
 </resources>

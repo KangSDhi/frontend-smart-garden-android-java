@@ -4,7 +4,11 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -21,13 +25,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class NotificationService extends Service {
 
     private static final String TAG = NotificationService.class.getSimpleName();
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
 
     public NotificationService(){
         executorService = Executors.newSingleThreadExecutor();
@@ -70,8 +75,9 @@ public class NotificationService extends Service {
                             Log.i(TAG, "onStartCommand: Kelembapan Rendah");
                             notificationBuilder
                                     .setSmallIcon(R.drawable.baseline_local_florist_24)
+                                    .setColor(Color.RED)
                                     .setContentTitle("Kelembapan Tanah Rendah")
-                                    .setContentText("Kelembapan Tanah: " + kelembapan);
+                                    .setContentText("Kelembapan Tanah: " + kelembapan+"%");
                             notificationManager.notify(1001, notificationBuilder.build());
 //                            startForeground(1001, notificationBuilder.build());
                         } else {
@@ -101,12 +107,12 @@ public class NotificationService extends Service {
                 sb.append(line).append('\n');
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "convertStreamToString IOException: " + e.getMessage());
         } finally {
             try {
                 is.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "convertStreamToString final IOException: " + e.getMessage());
             }
         }
         return sb.toString();

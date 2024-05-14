@@ -3,6 +3,8 @@ package com.example.mygarden;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +20,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.mygarden.config.HttpHandler;
 import com.example.mygarden.dto.GardenResponse;
 import com.example.mygarden.service.NotificationService;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements HttpHandler.HttpHandlerListener {
 
@@ -40,16 +45,20 @@ public class MainActivity extends AppCompatActivity implements HttpHandler.HttpH
 
         mTextView = (TextView) findViewById(R.id.persenKelembapanTanah);
 
-        HttpHandler mHttpHandler = new HttpHandler(this);
+        if (checkInternetAccess() && checkServerAccess()){
+            HttpHandler mHttpHandler = new HttpHandler(this);
 
-        String URL_LAST_DATA_GARDEN = "http://103.117.57.94:3000/api/garden/last";
-        mHttpHandler.startFetchingData(URL_LAST_DATA_GARDEN, INTERVAL);
+            String URL_LAST_DATA_GARDEN = "http://103.117.57.94:3000/api/garden/last";
+            mHttpHandler.startFetchingData(URL_LAST_DATA_GARDEN, INTERVAL);
 
-        if (!foregroundServiceRunning()){
-            Intent serviceIntent = new Intent(this, NotificationService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
+            if (!foregroundServiceRunning()){
+                Intent serviceIntent = new Intent(this, NotificationService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent);
+                }
             }
+        } else {
+            Toast.makeText(this, "Smartphone Tidak Terhubung Jaringan!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -79,8 +88,27 @@ public class MainActivity extends AppCompatActivity implements HttpHandler.HttpH
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "Error : " + error, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Error : " + error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "error: " + error);
             }
         });
     }
+
+    private boolean checkInternetAccess() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        return (Objects.requireNonNull(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)).getState() == NetworkInfo.State.CONNECTED ||
+                Objects.requireNonNull(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)).getState() == NetworkInfo.State.CONNECTED);
+    }
+
+    // slowwww
+    private boolean checkServerAccess(){
+        try {
+            String command = "ping -c 1 103.117.57.94";
+            return (Runtime.getRuntime().exec(command).waitFor() == 0);
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+
 }
